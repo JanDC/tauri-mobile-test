@@ -24,10 +24,8 @@ function App() {
     const [body, setBody] = useState('');
 
     const postMessage = async () => {
-        console.log('posting');
         const db = await Database.load('sqlite:mydatabase.db');
         const response = await db.execute('INSERT INTO posts (title, body) VALUES (?, ?)', [title, body]);
-        console.log(response);
 
         await getPosts()
     }
@@ -35,10 +33,11 @@ function App() {
     const getPosts = async () => {
         const db = await Database.load('sqlite:mydatabase.db');
         const result = await db.select<Post[]>('SELECT id, title, body FROM posts');
-        console.log(result);
 
         setPosts(result)
     }
+
+    getPosts()
 
     return (
         <ChakraProvider>
