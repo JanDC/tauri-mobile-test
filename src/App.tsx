@@ -13,13 +13,8 @@ import {ChangeEvent, useState} from "react";
 import {ArrowDownIcon, ArrowUpIcon, DeleteIcon, EmailIcon} from "@chakra-ui/icons";
 import Database from "@tauri-apps/plugin-sql";
 import {ArrowUpDownIcon} from "@chakra-ui/icons/ArrowUpDown";
+import {list, post, Post, remove} from "./lib/PostRepository.ts";
 
-interface Post {
-    id: number,
-    title: string,
-    body: string
-    created_at: string
-}
 
 const sortOptions = [null, 'ASC', 'DESC']
 const sortIcons = [<ArrowUpDownIcon/>, <ArrowUpIcon/>, <ArrowDownIcon/>]
@@ -32,32 +27,31 @@ function App() {
     const [sortMode, setSortMode] = useState<SortMode>(null)
     const [sortIcon, setSortIcon] = useState(<ArrowUpDownIcon/>)
 
+    const [timing,setTiming] = useState<number|null>(null)
+
     const postMessage = async () => {
-        const db = await Database.load('sqlite:mydatabase.db');
-        await db.execute('INSERT INTO posts (title, body) VALUES (?, ?)', [title, body]);
+        post(title, body)
         setBody('')
         setTitle('')
         await getPosts()
     }
 
     const deleteMessage = async (id: number) => {
-        const db = await Database.load('sqlite:mydatabase.db');
-        await db.execute('DELETE FROM posts WHERE id = ?', [id]);
+        await remove(id)
         await getPosts()
     }
 
-    const rotateSortMode = () => {
+    const rotateSortMode = async () => {
+        const start =Date.now()
         const newIndex = (sortOptions.indexOf(sortMode) + 1) % 3
         setSortMode(sortOptions[newIndex])
         setSortIcon(sortIcons[newIndex])
+        await getPosts()
+        setTiming(Date.now() - start)
     }
 
     const getPosts = async () => {
-        const db = await Database.load('sqlite:mydatabase.db');
-        const result = await db.select<Post[]>(`SELECT id, title, body, created_at
-                                                FROM posts ${sortMode ? `ORDER BY created_at ${sortMode}` : ''}`);
-
-        setPosts(result)
+        setPosts(await list(sortMode))
     }
 
     getPosts()
@@ -69,6 +63,7 @@ function App() {
                     Our messageboard:
                     <IconButton icon={sortIcon} aria-label={"sort list"} onClick={rotateSortMode}/>
                 </Heading>
+                <p>Timing: {timing}</p>
                 <VStack divider={<StackDivider borderColor={'gray.200'}/>} spacing={4} align={'stretch'} padding={4}>
                     {posts.map((post: any) => {
                         return <Box key={post.id} padding={"4px"}>
