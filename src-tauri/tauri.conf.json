@@ -1,6 +1,6 @@
 {
   "productName": "tauri-mobile-test",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.tauri-mobile-test.app",
   "build": {
     "beforeDevCommand": "yarn dev",
